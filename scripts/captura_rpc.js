@@ -32,6 +32,17 @@ const fs = require('fs');
                 const elementos = document.querySelectorAll(seletor);
                 elementos.forEach(elemento => elemento.remove());
             });
+
+            // Ocultar todas as linhas da tabela além das primeiras 5
+            const tabelaCorpo = document.querySelector('tbody[role="rowgroup"]');
+            if (tabelaCorpo) {
+                const linhas = tabelaCorpo.querySelectorAll('tr');
+                linhas.forEach((linha, indice) => {
+                    if (indice >= 5) { // Índice começa em 0
+                        linha.style.display = 'none';
+                    }
+                });
+            }
         });
 
         // Ler a frase do arquivo frase.txt (opcional)
