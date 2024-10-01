@@ -8,80 +8,80 @@ import tweepy
 from bs4 import BeautifulSoup
 import random
 
-# Função para obter Chains e verificar quais já foram usadas
-def obter_chains_usadas(arquivo='chains_usadas.json'):
-    if os.path.exists(arquivo):
-        with open(arquivo, 'r') as f:
-            return json.load(f)  # Retorna uma lista
+# Function to get used Chains and check which have been used
+def get_used_chains(file='chains_usadas.json'):
+    if os.path.exists(file):
+        with open(file, 'r') as f:
+            return json.load(f)  # Returns a list
     return []
 
-def salvar_chain_usada(chain, arquivo='chains_usadas.json'):
-    chains = obter_chains_usadas(arquivo)
+def save_used_chain(chain, file='chains_usadas.json'):
+    chains = get_used_chains(file)
     chains.append(chain)
-    with open(arquivo, 'w') as f:
+    with open(file, 'w') as f:
         json.dump(chains, f)
 
-def selecionar_chain():
+def select_chain():
     response = requests.get('https://rpclist.com/chains')
     if response.status_code != 200:
-        print("Erro ao acessar a página de Chains.")
+        print("Error accessing the Chains page.")
         return None
     soup = BeautifulSoup(response.text, 'html.parser')
-    # Ajuste o seletor conforme a estrutura real do site
+    # Adjust the selector based on the actual site structure
     chains = [a['href'] for a in soup.select('a[href^="/chain/"]')]
 
-    chains_usadas = obter_chains_usadas()
-    chains_disponiveis = [chain for chain in chains if chain not in chains_usadas]
+    used_chains = get_used_chains()
+    available_chains = [chain for chain in chains if chain not in used_chains]
 
-    if not chains_disponiveis:
-        print("Todas as Chains já foram usadas. Reiniciando o ciclo.")
-        # Reinicia o ciclo removendo todas as Chains usadas
-        salvar_ciclo_reiniciado(arquivo='chains_usadas.json')
-        chains_disponiveis = chains  # Todas as Chains estão disponíveis novamente
+    if not available_chains:
+        print("All Chains have been used. Restarting the cycle.")
+        # Restart the cycle by clearing the used Chains
+        reset_cycle(file='chains_usadas.json')
+        available_chains = chains  # All Chains are available again
 
-    # Seleciona a próxima Chain na ordem em que aparecem
+    # Select the next available Chain in order
     for chain in chains:
-        if chain not in chains_usadas:
+        if chain not in used_chains:
             return chain
 
-    # Caso todas as Chains estejam usadas (após reiniciar)
-    if chains_disponiveis:
-        return chains_disponiveis[0]
+    # In case all Chains are used (after resetting)
+    if available_chains:
+        return available_chains[0]
     else:
-        print("Nenhuma Chain disponível para processar.")
+        print("No Chains available to process.")
         return None
 
-def salvar_ciclo_reiniciado(arquivo='chains_usadas.json'):
-    with open(arquivo, 'w') as f:
+def reset_cycle(file='chains_usadas.json'):
+    with open(file, 'w') as f:
         json.dump([], f)
-    print("Ciclo reiniciado. Todas as Chains estão disponíveis novamente.")
+    print("Cycle restarted. All Chains are available again.")
 
-def extrair_top5_providers(chain_url):
+def extract_top5_providers(chain_url):
     response = requests.get(chain_url)
     if response.status_code != 200:
-        print(f"Erro ao acessar a página da Chain: {chain_url}")
+        print(f"Error accessing the Chain page: {chain_url}")
         return []
     soup = BeautifulSoup(response.text, 'html.parser')
-    # Ajuste o seletor conforme a estrutura real do site
+    # Adjust the selector based on the actual site structure
     providers = [a.text.strip() for a in soup.select('a.provider-name')][:5]
     return providers
 
-def gerar_texto(chain_nome, providers, chain_url):
-    # Templates para variação nos parágrafos informativos
-    paragrafo_variacoes = [
-        f"These providers are offering outstanding performance, uptime, and speed on #{chain_nome}!",
-        f"Experience top-notch performance and reliability with these #RPC providers on #{chain_nome}!",
-        f"Enhance your #RPC experience on #{chain_nome} with these leading providers!",
+def generate_text(chain_name, providers, chain_url):
+    # Templates for variation in informational paragraphs
+    info_paragraphs = [
+        f"These providers are offering outstanding performance, uptime, and speed on #{chain_name}!",
+        f"Experience top-notch performance and reliability with these #RPC providers on #{chain_name}!",
+        f"Enhance your #RPC experience on #{chain_name} with these leading providers!",
     ]
 
-    paragrafo_destaque = f"Major props to @{providers[0]} for leading the way with stellar performance! 🥇"
+    highlight_paragraph = f"Major props to @{providers[0]} for leading the way with stellar performance! 🥇"
 
-    paragrafo_incentivo = f"Check out {chain_url} and connect with these top-tier providers now!"
+    incentive_paragraph = f"Check out {chain_url} and connect with these top-tier providers now!"
 
-    # Seleciona aleatoriamente uma variação para o primeiro parágrafo
-    paragrafo_info = random.choice(paragrafo_variacoes)
+    # Randomly select a variation for the first paragraph
+    info_paragraph = random.choice(info_paragraphs)
 
-    texto = f"""🔥 Top 5 RPC Providers on #{chain_nome} Today!
+    text = f"""🔥 Top 5 RPC Providers on #{chain_name} Today!
 
 1️⃣ @{providers[0]}
 
@@ -93,46 +93,46 @@ def gerar_texto(chain_nome, providers, chain_url):
 
 5️⃣ @{providers[4]}
 
-{paragrafo_info}
+{info_paragraph}
 
-{paragrafo_destaque}
+{highlight_paragraph}
 
-{paragrafo_incentivo}
+{incentive_paragraph}
 """
-    return texto
+    return text
 
-def postar_no_x(texto, imagem_path):
+def post_to_x(text, image_path):
     consumer_key = os.getenv('CONSUMER_KEY')
     consumer_secret = os.getenv('CONSUMER_SECRET')
     access_token = os.getenv('ACCESS_TOKEN')
     access_token_secret = os.getenv('ACCESS_TOKEN_SECRET')
 
-    # Autenticação com a API do X
+    # Authenticate with the X API
     auth = tweepy.OAuth1UserHandler(consumer_key, consumer_secret, access_token, access_token_secret)
     api = tweepy.API(auth)
 
-    # Publicar a imagem com o texto
+    # Post the image with the text
     try:
-        api.update_with_media(imagem_path, status=texto)
-        print("Postagem realizada com sucesso no X.")
+        api.update_with_media(image_path, status=text)
+        print("Successfully posted to X.")
     except Exception as e:
-        print(f"Erro ao postar no X: {e}")
+        print(f"Error posting to X: {e}")
 
 def main():
-    chain = selecionar_chain()
+    chain = select_chain()
     if not chain:
         return
 
-    chain_nome = chain.split('/')[-1].replace('-', ' ').title()  # Exemplo: "arbitrum-one" -> "Arbitrum One"
+    chain_name = chain.split('/')[-1].replace('-', ' ').title()  # Example: "arbitrum-one" -> "Arbitrum One"
     chain_url = f"https://rpclist.com{chain}"
-    top5 = extrair_top5_providers(chain_url)
+    top5 = extract_top5_providers(chain_url)
     if len(top5) < 5:
-        print("Menos de 5 providers encontrados.")
+        print("Less than 5 providers found.")
         return
 
-    texto = gerar_texto(chain_nome, top5, chain_url)
-    postar_no_x(texto, 'assets/chains_captura.png')
-    salvar_chain_usada(chain)
+    text = generate_text(chain_name, top5, chain_url)
+    post_to_x(text, 'assets/chains_captura.png')
+    save_used_chain(chain)
 
 if __name__ == "__main__":
     main()
