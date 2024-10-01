@@ -5,58 +5,57 @@ const fs = require('fs');
 
 (async () => {
     try {
-        // Inicializar o navegador
+        // Launch the browser
         const browser = await puppeteer.launch({
             headless: true,
             args: ['--no-sandbox', '--disable-setuid-sandbox']
         });
         const page = await browser.newPage();
 
-        // Definir o tamanho da viewport para melhor captura
+        // Set viewport size for better capture
         await page.setViewport({ width: 1280, height: 800 });
 
-        // Acessar a página principal de Chains
+        // Navigate to the Chains page
         await page.goto('https://rpclist.com/chains', { waitUntil: 'networkidle2' });
 
-        // Remover elementos indesejados (exemplo: menu, rodapé)
+        // Remove unwanted elements (e.g., header, footer, navigation)
         await page.evaluate(() => {
-            // Seletores CSS dos elementos a serem removidos
-            const elementosParaRemover = [
-                'header',      // Cabeçalho
-                'footer',      // Rodapé
-                '.navbar',     // Menu de navegação
-                // Adicione mais seletores conforme necessário
+            const selectorsToRemove = [
+                'header',
+                'footer',
+                '.navbar',
+                // Add more selectors as needed
             ];
 
-            elementosParaRemover.forEach(seletor => {
-                const elementos = document.querySelectorAll(seletor);
-                elementos.forEach(elemento => elemento.remove());
+            selectorsToRemove.forEach(selector => {
+                const elements = document.querySelectorAll(selector);
+                elements.forEach(element => element.remove());
             });
 
-            // Ocultar todas as linhas da tabela além das primeiras 5
-            const tabelaCorpo = document.querySelector('tbody[role="rowgroup"]');
-            if (tabelaCorpo) {
-                const linhas = tabelaCorpo.querySelectorAll('tr');
-                linhas.forEach((linha, indice) => {
-                    if (indice >= 5) { // Índice começa em 0
-                        linha.style.display = 'none';
+            // Hide all table rows beyond the first 5
+            const tableBody = document.querySelector('tbody[role="rowgroup"]');
+            if (tableBody) {
+                const rows = tableBody.querySelectorAll('tr');
+                rows.forEach((row, index) => {
+                    if (index >= 5) { // Index starts at 0
+                        row.style.display = 'none';
                     }
                 });
             }
         });
 
-        // Ler a frase do arquivo frase.txt (opcional)
-        let frase = 'Connect with these top-tier providers now!';  // Frase padrão
-        const frasePath = '../assets/frase.txt';
-        if (fs.existsSync(frasePath)) {
-            frase = fs.readFileSync(frasePath, 'utf8').trim();
+        // Read the phrase from frase.txt (optional)
+        let phrase = 'Connect with these top-tier providers now!';  // Default phrase
+        const phrasePath = '../assets/frase.txt';
+        if (fs.existsSync(phrasePath)) {
+            phrase = fs.readFileSync(phrasePath, 'utf8').trim();
         }
 
-        // Adicionar espaço para a logo e frase
-        await page.evaluate((fraseText) => {
+        // Add space for the logo and phrase
+        await page.evaluate((phraseText) => {
             const body = document.querySelector('body');
 
-            // Criar um container para a logo
+            // Create a container for the logo
             const logoContainer = document.createElement('div');
             logoContainer.style.position = 'fixed';
             logoContainer.style.bottom = '20px';
@@ -64,40 +63,40 @@ const fs = require('fs');
             logoContainer.style.zIndex = '1000';
 
             const logoImg = document.createElement('img');
-            logoImg.src = 'https://seu-usuario.github.io/rpc-automation/assets/logo.png'; // URL pública da sua logo
+            logoImg.src = 'https://your-username.github.io/rpc-automation/assets/logo.png'; // Public URL of your logo
             logoImg.alt = 'Logo';
-            logoImg.style.width = '100px'; // Ajuste o tamanho conforme necessário
+            logoImg.style.width = '100px'; // Adjust size as needed
             logoImg.style.height = 'auto';
 
             logoContainer.appendChild(logoImg);
             body.appendChild(logoContainer);
 
-            // Criar um container para a frase
-            const fraseContainer = document.createElement('div');
-            fraseContainer.style.position = 'fixed';
-            fraseContainer.style.bottom = '20px';
-            fraseContainer.style.left = '20px';
-            fraseContainer.style.color = 'white';
-            fraseContainer.style.fontSize = '24px';
-            fraseContainer.style.fontFamily = 'Arial, sans-serif';
-            fraseContainer.style.zIndex = '1000';
+            // Create a container for the phrase
+            const phraseContainer = document.createElement('div');
+            phraseContainer.style.position = 'fixed';
+            phraseContainer.style.bottom = '20px';
+            phraseContainer.style.left = '20px';
+            phraseContainer.style.color = 'white';
+            phraseContainer.style.fontSize = '24px';
+            phraseContainer.style.fontFamily = 'Arial, sans-serif';
+            phraseContainer.style.zIndex = '1000';
 
-            fraseContainer.innerText = fraseText; // Adiciona a frase do arquivo
-            body.appendChild(fraseContainer);
-        }, frase);
+            phraseContainer.innerText = phraseText; // Adds the phrase from the file
+            body.appendChild(phraseContainer);
+        }, phrase);
 
-        // Esperar um pouco para garantir que os elementos foram adicionados
+        // Wait a bit to ensure elements are added
         await page.waitForTimeout(1000);
 
-        // Capturar a imagem da página limpa com logo e frase adicionadas
+        // Capture the screenshot of the cleaned page with logo and phrase
         await page.screenshot({ path: '../assets/chains_captura.png', fullPage: true });
 
-        // Fechar o navegador
+        // Close the browser
         await browser.close();
 
-        console.log('Captura de tela realizada com sucesso!');
+        console.log('Screenshot captured successfully!');
     } catch (error) {
-        console.error('Erro na captura de tela:', error);
+        console.error('Error capturing screenshot:', error);
         process.exit(1);
     }
 })();
