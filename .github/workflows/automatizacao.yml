@@ -1,0 +1,57 @@
+# .github/workflows/automatizacao.yml
+
+name: RPC Automation and Twitter Posting
+
+on:
+  schedule:
+    - cron: '0 9 * * *'  # Runs daily at 09:00 UTC
+  workflow_dispatch:      # Allows manual trigger
+
+jobs:
+  automate:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Set Up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '16'  # Recommended Node.js version
+
+    - name: Install Node.js Dependencies
+      run: |
+        cd scripts
+        npm install
+
+    - name: Run Screenshot Capture with Puppeteer
+      run: |
+        cd scripts
+        node captura_rpc.js
+
+    - name: Set Up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'  # Python version
+
+    - name: Install Python Dependencies
+      run: |
+        cd scripts
+        pip install -r requirements.txt
+
+    - name: Run Update and Post Script
+      env:
+        CONSUMER_KEY: ${{ secrets.CONSUMER_KEY }}
+        CONSUMER_SECRET: ${{ secrets.CONSUMER_SECRET }}
+        ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+        ACCESS_TOKEN_SECRET: ${{ secrets.ACCESS_TOKEN_SECRET }}
+      run: |
+        cd scripts
+        python update_banner.py
+
+    - name: Upload Screenshot Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: chains_screenshot
+        path: assets/chains_captura.png
