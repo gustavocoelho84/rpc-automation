@@ -1,6 +1,7 @@
 // scripts/captura_rpc.js
 
 const puppeteer = require('puppeteer');
+const fs = require('fs');
 
 (async () => {
     try {
@@ -19,6 +20,7 @@ const puppeteer = require('puppeteer');
 
         // Remover elementos indesejados (exemplo: menu, rodapé)
         await page.evaluate(() => {
+            // Seletores CSS dos elementos a serem removidos
             const elementosParaRemover = [
                 'header',      // Cabeçalho
                 'footer',      // Rodapé
@@ -32,8 +34,15 @@ const puppeteer = require('puppeteer');
             });
         });
 
+        // Ler a frase do arquivo frase.txt (opcional)
+        let frase = 'Connect with these top-tier providers now!';  // Frase padrão
+        const frasePath = '../assets/frase.txt';
+        if (fs.existsSync(frasePath)) {
+            frase = fs.readFileSync(frasePath, 'utf8').trim();
+        }
+
         // Adicionar espaço para a logo e frase
-        await page.evaluate(() => {
+        await page.evaluate((fraseText) => {
             const body = document.querySelector('body');
 
             // Criar um container para a logo
@@ -44,7 +53,7 @@ const puppeteer = require('puppeteer');
             logoContainer.style.zIndex = '1000';
 
             const logoImg = document.createElement('img');
-            logoImg.src = 'https://seu-dominio.com/path-to-your-logo.png'; // URL pública da sua logo
+            logoImg.src = 'https://seu-usuario.github.io/rpc-automation/assets/logo.png'; // URL pública da sua logo
             logoImg.alt = 'Logo';
             logoImg.style.width = '100px'; // Ajuste o tamanho conforme necessário
             logoImg.style.height = 'auto';
@@ -62,9 +71,9 @@ const puppeteer = require('puppeteer');
             fraseContainer.style.fontFamily = 'Arial, sans-serif';
             fraseContainer.style.zIndex = '1000';
 
-            fraseContainer.innerText = 'Sua frase aqui!'; // Altere para a frase desejada
+            fraseContainer.innerText = fraseText; // Adiciona a frase do arquivo
             body.appendChild(fraseContainer);
-        });
+        }, frase);
 
         // Esperar um pouco para garantir que os elementos foram adicionados
         await page.waitForTimeout(1000);
