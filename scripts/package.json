@@ -1,0 +1,14 @@
+{
+  "name": "rpc-automation",
+  "version": "1.0.0",
+  "description": "Automation to capture and post RPC providers",
+  "main": "captura_rpc.js",
+  "scripts": {
+    "capture": "node captura_rpc.js"
+  },
+  "dependencies": {
+    "puppeteer": "^19.7.5"
+  },
+  "author": "",
+  "license": "ISC"
+}
